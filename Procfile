@@ -1,1 +1,1 @@
-web: java -Dpuertito=%PORT% -jar ServiSSL/serviSSL.jar
+web: java -Dpuertito=%PORT% -jar serviSSL.jar
