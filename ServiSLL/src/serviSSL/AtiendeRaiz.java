@@ -23,6 +23,7 @@ public class AtiendeRaiz implements HttpHandler {
             		"		<input type='button' id='idBoton' name='nameBoton' value='Boton' onclick='enviaOrden()'/>\n" +
             		"	</form>\n" +
             		"	<script>\n" + 
+            		"		var global;\n" +
             		"		function mandarDatosServidor(j_parametros1){\n" + 
             		"			var s_urlActual = window.location.href;\n" + 
             		"			console.log(s_urlActual);\n" + 
@@ -33,10 +34,17 @@ public class AtiendeRaiz implements HttpHandler {
             		"			fetch(u_url1)\n" + 
             		"			.then(res => res.json())\n" + 
             		"			.then(json => {\n"+
-            		"				var deco = decodeURIComponent(window.atob( json['toma'] ));\n" +
-            		"				console.log(deco)})\n" +
+            		"				global = json['toma'];\n" +
+            		"				var deco = decodeURIComponent(escape(window.atob(global)));\n" +
+            		"				console.log(deco);})\n" +
             		"			.catch(function (error1) {\n" + 
-            		"				console.log('Algo salio mal', error1);\n" + 
+            		"				try {\n" + 
+            		"					var deco = decodeURIComponent(window.atob(global));\n"+
+            		"					console.log(deco);\n" +
+            		"				}\n" + 
+            		"				catch(error) {\n" + 
+            		"	  				console.error('Algo salio mal', error);\n" + 
+            		"				}\n" + 
             		"			});\n" + 
             		"		}\n" + 
             		"		function enviaOrden(){\n" + 
