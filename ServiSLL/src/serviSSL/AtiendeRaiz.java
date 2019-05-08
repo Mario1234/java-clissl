@@ -33,7 +33,7 @@ public class AtiendeRaiz implements HttpHandler {
             		"			fetch(u_url1)\n" + 
             		"			.then(res => res.json())\n" + 
             		"			.then(json => {\n"+
-            		"				var deco = decodeURIComponent(escape(window.atob( json['toma'] )));\n" +
+            		"				var deco = decodeURIComponent(window.atob( json['toma'] ));\n" +
             		"				console.log(deco)})\n" +
             		"			.catch(function (error1) {\n" + 
             		"				console.log('Algo salio mal', error1);\n" + 

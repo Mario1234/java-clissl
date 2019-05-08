@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
@@ -74,7 +76,7 @@ public class AtiendeGet implements HttpHandler {
                 //String s_b64 = Arrays.toString(ba_b64);
                 response="{ \"toma\": \""+s_b64+"\"}";
                 //response=respuestaSSL;
-                he.getResponseHeaders().set("Content-Type", "appication/json");
+                he.getResponseHeaders().set("Content-Type", "appication/json; charset=utf-8");
                 he.sendResponseHeaders(200, response.length());
                 OutputStream os = he.getResponseBody();
                 os.write(response.getBytes());
@@ -148,9 +150,13 @@ public class AtiendeGet implements HttpHandler {
     	    	httpsConnection.disconnect();
     		}
     		catch(Exception e){
-    			System.out.println(e.getMessage());
-    			e.printStackTrace();
-    			return e.getMessage();
+    			//System.out.println(e.getMessage());
+    			//e.printStackTrace();
+    			StringWriter errors = new StringWriter();
+    			e.printStackTrace(new PrintWriter(errors));
+    			//quitar los saltos linea;
+    			String errores = errors.toString().replaceAll("[\\r\\n]+", "____");
+    			return "¡Error!: "+errores;
     		}
         	return accum;//"todo ok: "+accum;
         }
