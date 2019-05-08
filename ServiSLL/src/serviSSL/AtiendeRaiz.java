@@ -19,8 +19,7 @@ public class AtiendeRaiz implements HttpHandler {
             		"<body>\n" +
             		"	<form id='idFormulario1' action='/nuevaOrden' method='POST'>\n" +
             		"		<input type='text' id='idDestSSL' name='nameDestSSL' />\n" +   
-            		"		<input type='text' id='idRutaCacerts' name='nameRutaCacerts' />\n" + 
-            		"		<input type='text' id='idContraCacerts' name='nameContraCacerts' />\n" + 
+            		"		<input type='text' id='idRutaCert' name='nameRutaCert' />\n" + 
             		"		<input type='button' id='idBoton' name='nameBoton' value='Boton' onclick='enviaOrden()'/>\n" +
             		"	</form>\n" +
             		"	<script>\n" + 
@@ -42,9 +41,8 @@ public class AtiendeRaiz implements HttpHandler {
             		"		}\n" + 
             		"		function enviaOrden(){\n" + 
             		"			var s_destSSL = document.getElementById('idDestSSL').value;\n" + 
-            		"			var s_rutaCacerts = document.getElementById('idRutaCacerts').value;\n" + 
-            		"			var s_contraCacerts = document.getElementById('idContraCacerts').value;\n" + 
-            		"			var j_parametros1 = {destinossl:s_destSSL, rutacacerts:s_rutaCacerts, contracacerts:s_contraCacerts};\n" + 
+            		"			var s_rutaCert = document.getElementById('idRutaCert').value;\n" + 
+            		"			var j_parametros1 = {destinossl:s_destSSL, rutacert:s_rutaCert};\n" + 
             		"			mandarDatosServidor(j_parametros1);\n" + 
             		"		}\n" + 
             		"	</script>\n" + 

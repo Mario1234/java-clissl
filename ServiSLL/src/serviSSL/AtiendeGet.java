@@ -3,14 +3,23 @@ package serviSSL;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -38,8 +49,7 @@ public class AtiendeGet implements HttpHandler {
         @Override
         public void handle(HttpExchange he) throws IOException {
         	String destinoSSL = "https://www.google.es";//"https://notificaciones.060.es:8090/APE-SNE-WS?wsdl";
-        	String cacerts = null;
-        	String contras = null;//"changeit";
+        	String rutacert = null;
         	String respuestaSSL = null;
                 // parse request
                 Map<String, Object> parameters = new HashMap<String, Object>();
@@ -54,14 +64,11 @@ public class AtiendeGet implements HttpHandler {
                 	if(key.equalsIgnoreCase("destinossl")) {
                 		destinoSSL = (String)parameters.get(key);                		
                 	}
-                	if(key.equalsIgnoreCase("rutacacerts")) {
-                		cacerts = (String)parameters.get(key); 
-                	}
-                	if(key.equalsIgnoreCase("contracacerts")) {
-                		contras = (String)parameters.get(key); 
+                	if(key.equalsIgnoreCase("rutacert")) {
+                		rutacert = (String)parameters.get(key); 
                 	}
                 }
-                respuestaSSL = ejecutaPeticionSSL(destinoSSL,cacerts,contras);
+                respuestaSSL = ejecutaPeticionSSL(destinoSSL,rutacert);
                 byte[] ba_b64 = Base64.encodeBase64(respuestaSSL.getBytes());
                 String s_b64 = new String(ba_b64);
                 //String s_b64 = Arrays.toString(ba_b64);
@@ -112,16 +119,18 @@ public class AtiendeGet implements HttpHandler {
             }
         }
         
-        private String ejecutaPeticionSSL(String destinoSSL, String s_rutaCacerts, String s_contrasenia) {
-        	if(s_rutaCacerts!=null && s_contrasenia!=null) {
-        		System.setProperty("javax.net.ssl.trustStore", s_rutaCacerts);
-        		System.setProperty("javax.net.ssl.trustStorePassword", s_contrasenia);
-        	}        	
+        private String ejecutaPeticionSSL(String destinoSSL, String s_rutaCert) {    	
         	String accum = "";
         	try{
     			System.out.println(System.getProperty("java.runtime.version"));
     			System.setProperty("javax.net.ssl.debug","true");
-    			SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+    			SSLSocketFactory sslsocketfactory = null;
+    			if(s_rutaCert==null) {
+    				sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+    			}
+    			else {
+    				sslsocketfactory = cargarCertificadoContextoSSL(s_rutaCert,"cacerts");
+    			}
     			System.out.print("0");
     			URL url = new URL(destinoSSL);
     	    	HttpsURLConnection  httpsConnection = (HttpsURLConnection) url.openConnection();
@@ -145,4 +154,38 @@ public class AtiendeGet implements HttpHandler {
     		}
         	return accum;//"todo ok: "+accum;
         }
+        
+        private static SSLSocketFactory cargarCertificadoContextoSSL(String rutaCert, String rutaAlmacen) throws Exception {
+    		//leer el almacen
+    		KeyStore almacen = KeyStore.getInstance(KeyStore.getDefaultType());
+    		File archivoAlmacen = new File(rutaAlmacen);
+    		String contraseniaAlmacen = "changeit";
+    		InputStream entradaAlmacen = new FileInputStream(archivoAlmacen);
+    		almacen.load(entradaAlmacen, contraseniaAlmacen.toCharArray());
+    		entradaAlmacen.close();		
+    		
+    		//mete el certificado en el almacen
+    		File archivoCer = new File(rutaCert);
+    		InputStream entradaCer = new FileInputStream(archivoCer);
+    		BufferedInputStream bufferCer = new BufferedInputStream(entradaCer);
+    		CertificateFactory cf = CertificateFactory.getInstance("X.509");
+    		while (bufferCer.available() > 0) {
+    	        Certificate cert = cf.generateCertificate(bufferCer);
+    	        almacen.setCertificateEntry("aliasito"+rutaCert.substring(0, 3), cert);
+    	    }
+    		entradaCer.close();
+    		OutputStream salidaAlmacen = new FileOutputStream(rutaAlmacen);
+    		almacen.store(salidaAlmacen, contraseniaAlmacen.toCharArray());
+    		salidaAlmacen.close();
+    	    
+    		//inicializa el almacen de confianza
+    		TrustManagerFactory trustManagerFactory =
+    				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    		trustManagerFactory.init(almacen);
+    		//adapta el almacen al contexto SSL
+    		SSLContext context = SSLContext.getInstance("TLS");
+    		context.init(null, trustManagerFactory.getTrustManagers(), new SecureRandom());
+
+    		return context.getSocketFactory();
+    	}
 }
